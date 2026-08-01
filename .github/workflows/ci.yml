@@ -1,0 +1,84 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        gcc-version: [11, 12, 13]
+        exclude:
+          - os: macos-latest
+            gcc-version: 11
+          - os: macos-latest
+            gcc-version: 12
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Fortran
+        uses: fortran-lang/setup-fortran@v1
+        with:
+          compiler: gcc
+          version: ${{ matrix.gcc-version }}
+
+      - name: Setup fpm
+        uses: fortran-lang/setup-fpm@v5
+        with:
+          fpm-version: "v0.10.1"
+
+      - name: Build
+        run: fpm build --verbose
+
+      - name: Run tests
+        run: fpm test --verbose
+
+      - name: Run examples
+        run: |
+          fpm run --example read_json
+          fpm run --example write_json
+          fpm run --example mutate_json
+
+  test-cmake:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Fortran
+        uses: fortran-lang/setup-fortran@v1
+        with:
+          compiler: gcc
+          version: 13
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/install
+
+      - name: Build
+        run: cmake --build build --verbose
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Install
+        run: cmake --install build
+
+      - name: Verify pkg-config file
+        run: |
+          export PKG_CONFIG_PATH=${{ github.workspace }}/install/lib/pkgconfig:${{ github.workspace }}/install/lib64/pkgconfig
+          pkg-config --print-errors --cflags --libs fortran-yyjson

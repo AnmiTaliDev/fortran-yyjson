@@ -1,0 +1,76 @@
+name: Update vendored yyjson
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check latest yyjson release
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          latest=$(gh api repos/ibireme/yyjson/releases/latest --jq '.tag_name')
+          current=$(grep -oP '(?<=YYJSON_VERSION_STRING ")[^"]+' src/yyjson.h)
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          if [ "$latest" = "$current" ]; then
+            echo "up_to_date=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "up_to_date=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download new yyjson sources
+        if: steps.check.outputs.up_to_date == 'false'
+        run: |
+          tag="${{ steps.check.outputs.latest }}"
+          curl -fsSL -o src/yyjson.c "https://raw.githubusercontent.com/ibireme/yyjson/${tag}/src/yyjson.c"
+          curl -fsSL -o src/yyjson.h "https://raw.githubusercontent.com/ibireme/yyjson/${tag}/src/yyjson.h"
+
+      - name: Setup Fortran
+        if: steps.check.outputs.up_to_date == 'false'
+        uses: fortran-lang/setup-fortran@v1
+        with:
+          compiler: gcc
+          version: 13
+
+      - name: Setup fpm
+        if: steps.check.outputs.up_to_date == 'false'
+        uses: fortran-lang/setup-fpm@v5
+        with:
+          fpm-version: "v0.10.1"
+
+      - name: Build and test with new sources
+        if: steps.check.outputs.up_to_date == 'false'
+        run: |
+          fpm build --verbose
+          fpm test --verbose
+
+      - name: Open pull request
+        if: steps.check.outputs.up_to_date == 'false'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore: update vendored yyjson to ${{ steps.check.outputs.latest }}"
+          title: "chore: update vendored yyjson ${{ steps.check.outputs.current }} -> ${{ steps.check.outputs.latest }}"
+          body: |
+            Automated update of the vendored yyjson sources from
+            [ibireme/yyjson](https://github.com/ibireme/yyjson) release
+            [`${{ steps.check.outputs.latest }}`](https://github.com/ibireme/yyjson/releases/tag/${{ steps.check.outputs.latest }}).
+
+            Build and tests passed with the new sources before this PR was opened.
+          branch: update-yyjson-${{ steps.check.outputs.latest }}
+          delete-branch: true
+          add-paths: |
+            src/yyjson.c
+            src/yyjson.h

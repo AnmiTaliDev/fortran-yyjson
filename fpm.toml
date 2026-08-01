@@ -1,0 +1,34 @@
+name = "fortran-yyjson"
+version = "0.1.0"
+license = "MIT"
+author = "AnmiTaliDev"
+maintainer = "anmitalidev@nuros.org"
+copyright = "Copyright 2026, AnmiTaliDev"
+description = "Fortran bindings for yyjson, a fast C JSON library"
+homepage = "https://github.com/AnmiTaliDev/fortran-yyjson"
+
+[library]
+source-dir = "src"
+
+[install]
+library = true
+
+[[test]]
+name = "test_yyjson"
+source-dir = "test"
+main = "test_yyjson.f90"
+
+[[example]]
+name = "read_json"
+source-dir = "example"
+main = "read_json.f90"
+
+[[example]]
+name = "write_json"
+source-dir = "example"
+main = "write_json.f90"
+
+[[example]]
+name = "mutate_json"
+source-dir = "example"
+main = "mutate_json.f90"

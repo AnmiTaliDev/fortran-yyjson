@@ -1,0 +1,44 @@
+# Build directories
+build/
+install/
+_build/
+
+# fpm
+fpm.rsp
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+cmake_install.cmake
+CTestTestfile.cmake
+Testing/
+compile_commands.json
+CPackConfig.cmake
+CPackSourceConfig.cmake
+_deps/
+
+# Compiled objects and libraries
+*.mod
+*.smod
+*.o
+*.obj
+*.a
+*.so
+*.so.*
+*.dylib
+*.dll
+*.exe
+*.dSYM/
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cache/
+
+# OS
+.DS_Store
+Thumbs.db
