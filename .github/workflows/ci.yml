@@ -31,6 +31,10 @@ jobs:
           compiler: gcc
           version: ${{ matrix.gcc-version }}
 
+      - name: Install fpm runtime dependency (macOS)
+        if: runner.os == 'macOS'
+        run: brew install gcc@12
+
       - name: Setup fpm
         uses: fortran-lang/setup-fpm@v10
         with:
