@@ -32,9 +32,9 @@ jobs:
           version: ${{ matrix.gcc-version }}
 
       - name: Setup fpm
-        uses: fortran-lang/setup-fpm@v5
+        uses: fortran-lang/setup-fpm@v10
         with:
-          fpm-version: "v0.10.1"
+          fpm-version: "v0.13.0"
 
       - name: Build
         run: fpm build --verbose
